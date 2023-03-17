@@ -12,13 +12,27 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class PayService {
+	
+	private static final String AUTH_TOKEN = "r2d2";
 
 	@PostMapping(path = "/pay", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<PaymentResponse> pagar(
 			@RequestHeader("Token") String token,
 			@Valid @RequestBody DadosCartao dadosCartao,
-			Errors erros) {
+			Errors errors) {
 		
+		if(!AUTH_TOKEN.equals(token)) {
+			return ResponseEntity.badRequest().body(new PaymentResponse("Token inválido"));
+		}
 		
+		if(errors.hasErrors()) {
+			return ResponseEntity.ok(new PaymentResponse(StatusPagamento.CartaoInvalido));
+		}
+		
+		String numCartao = dadosCartao.getNumCartao();
+		
+		StatusPagamento status = numCartao.startsWith("1111") ? StatusPagamento.Autorizado : StatusPagamento.NaoAutorizado;
+		
+		return ResponseEntity.ok(new PaymentResponse(status));
 	}
 }
